@@ -1,0 +1,160 @@
+#!/bin/bash
+
+
+#------------------------------------------------------------------------------#
+# If available,returns a pre-rendered tmux status line weather report and      #
+# checks report age to determine if a new report needs to be rendered. If no   #
+# report has been rendered, a new report is rendered.                          #
+#------------------------------------------------------------------------------#
+
+DEGREES=$'\xc2\xb0'
+
+declare -A units=(
+    # obs
+    ["apparent_temp"]="${DEGREES}C"
+    ["delta_t"]="${DEGREES}C"
+    ["gust_kmh"]="km/h"
+    ["wind_gust_spd"]="kn"
+    ["air_temperature"]="${DEGREES}C"
+    ["dew_point"]="${DEGREES}C"
+    ["pres"]="hPa"
+    ["msl_pres"]="hPa"
+    ["qnh_pres"]="hPa"
+    ["rain_hour"]="mm"
+    ["rain_ten"]="mm"
+    ["rel-humidity"]="%"
+    ["wind_dir_deg"]="${DEGREES}"
+    ["wind_spd_kmh"]="km/h"
+    ["wind_spd"]="kn"
+    # fcast
+    ["air_temperature_minimum"]="${DEGREES}C"
+    ["air_temperature_maximum"]="${DEGREES}C")
+
+
+resolve_vars() {
+    local -n vars=$1
+    local -n data=$2
+    declare -a out=()
+    local fmt=""
+
+    for x in "${!vars[@]}"; do
+        readarray -td'|' opts < <(printf '%s' "${vars[$x]}")
+        local fnd=0 #true
+        local _fmt=""
+        declare -a _out=()
+
+        for y in "${!opts[@]}"; do
+            local v0=$(echo "${opts[$y]}" | cut -d ";" -f 1)
+            local v1=$(echo "${opts[$y]}" | cut -d ";" -f 2)
+            readarray -td% fmts < <(printf '%s' "$v0")
+            readarray -td, params < <(printf '%s' "$v1")
+            local fmt_len=${#fmts[@]}
+
+            if [ $fmt_len -gt 2 ]; then
+                local fmt1_0=$(echo "$v0" | cut -d "%" -f 1)
+                local fmt1="$fmt1_0%${fmts[1]}"
+                local prm="${params[0]}"
+                _fmt="${_fmt}${fmt1}"
+                case $prm in
+                    "units"_*) _out+=("${units[${prm#units_}]}") ;;
+                    *) if [[ ! -z ${data[$prm]} ]]; then _out+=("${data[$prm]}"); else fnd=1; fi ;; 
+                esac
+                
+                for f in $(seq 2 $(expr $fmt_len - 1)); do
+                    _fmt="${_fmt}%${fmts[$f]}"                    
+                    local idx=$(expr $f - 1)
+                    local prm=${params[$idx]}
+                    case $prm in
+                        "units"_*) _out+=("${units[${prm#units_}]}") ;;
+                        *) if [[ ! -z ${data[$prm]} ]]; then _out+=("${data[$prm]}"); else fnd=1; fi ;;
+                    esac
+                done
+            else
+                _fmt="${_fmt}$v0"
+                local prm=$v1
+                case $prm in
+                    "units"_*) _out+=("${units[${prm#units_}]}") ;;
+                    *) if [[ ! -z ${data[$prm]} ]]; then _out+=("${data[$prm]}"); else fnd=1; fi ;; 
+                esac
+            fi
+
+            # if we found everything (i.e. not found nothing)...
+            if [ $fnd -eq 0 ]; then
+                fmt="${fmt}${_fmt}"
+                out+=( "${_out[@]}" )
+                break
+            fi
+        done
+        
+    done
+    printf "${fmt}" "${out[@]}"
+}
+
+
+# Args: obs fcast
+dispatch() {
+    local -n out_arr="$1"
+
+    load_dict orep <<< "$2"
+    out_arr["obs_label"]=$(resolve_vars OBS_LABEL orep)
+    out_arr["obs_data"]=$(resolve_vars OBS_VARS orep)
+
+    load_dict frep <<< "$3"
+    out_arr["fcast_label"]=$(resolve_vars FCAST_LABEL frep)
+    out_arr["fcast_data"]=$(resolve_vars FCAST_VARS frep)
+}
+
+
+# Args: path_to_conf_file
+parse_report() {
+    local obs_rot=5
+    local fcast_rot=1
+
+    if [ -f "${OUTFILE}" ]; then
+        # File exists
+        local obs_rot=$(sed -n '3p' "$OUTFILE")
+        is_int $obs_rot
+        if [ $? -eq 0 ]; then
+            local expiry=$(sed -n '1p' "$OUTFILE")
+            local n_lines=$(sed -n '2p' "$OUTFILE")
+            local fcast_rot=$(sed -n '4p' "$OUTFILE")
+            local cur=$(expr ${obs_rot} + ${fcast_rot})
+            if [ $(($cur)) -lt $(($n_lines)) ]; then
+                load_dict obs <<< "$(sed -n "${obs_rot}p" "$OUTFILE")"
+                if [ $((${fcast_rot})) -lt $((obs["n_fcast"])) ]; then
+                    replace_line 4 "$(expr ${fcast_rot} + 1)" "$OUTFILE"
+                else
+                    replace_line 3 "$(expr $(($cur)) + 1)" "$OUTFILE"
+                    replace_line 4 "1" "$OUTFILE"
+                fi
+            else
+                replace_line 3 "5" "$OUTFILE"
+                replace_line 4 "1" "$OUTFILE"
+            fi
+        fi
+
+        local _obs="$(sed -n "${obs_rot}p" "$OUTFILE")"
+        local _fcast="$(sed -n "$(expr ${obs_rot} + ${fcast_rot})p" "$OUTFILE")"
+        
+        dispatch "$1" "$_obs" "$_fcast"
+
+        is_less_than $EPOCHSECONDS $expiry
+        if [ $? -eq 0 ]; then
+            # File is current, exit
+            exit 0
+        fi
+    
+    fi
+    # File does not exist or is not current, call generator...
+    # Check for running reports generator...
+    
+    #FIXME: dispatch fcast and obs labels with "updating..." in place of data
+    pids=$(pidof -x "$TMUX_WEATHER_AU_SCRIPTS_DIR/weather-au-update.sh")
+    err=$?
+    if [ $(($err)) -eq 1 ]; then
+        # Reports generator not running, fetch new data and generate reports...
+        local cmd="$TMUX_WEATHER_AU_SCRIPTS_DIR/weather-au-update.sh $obs_rot $fcast_rot ${TMUX_WEATHER_AU_SRC_DIR} ${TMUX_WEATHER_AU_CONF_FILE}"
+        $cmd & disown;
+    # else Files are currently being generated, nothing to do, return.
+    fi
+}
