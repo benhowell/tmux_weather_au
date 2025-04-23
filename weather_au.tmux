@@ -12,12 +12,14 @@ main() {
     source ${TMUX_WEATHER_AU_CONF_FILE}
     source ${TMUX_WEATHER_AU_THEMES_DIR}/$THEME
 
-    declare -A out=()
-    parse_report out
+    #declare -A out=()
+    parse_report #out
 
-    fcast="$FCAST_LABEL__ ${out["fcast_label"]}$__FCAST_LABEL $FCAST_DATA__${out["fcast_data"]} $__FCAST_DATA"
-    obs="$OBS_LABEL__ ${out["obs_label"]}$__OBS_LABEL $OBS_DATA__${out["obs_data"]} $__OBS_DATA"
-    tmux set-option -g status-format[1] "$fcast$obs"
+    #fcast="$FCAST_LABEL__ ${out["fcast_label"]}$__FCAST_LABEL $FCAST_DATA__${out["fcast_data"]} $__FCAST_DATA"
+    #obs="$OBS_LABEL__ ${out["obs_label"]}$__OBS_LABEL $OBS_DATA__${out["obs_data"]} $__OBS_DATA"
+
+    #tmux set-option -g status-format[1] "$fcast$obs"
+    echo "$fcast$obs"
 }
 
 #------------------------------------------------------------------------------#
@@ -25,7 +27,6 @@ main() {
 #------------------------------------------------------------------------------#
 
 if [ $# -eq 0 ]; then
-    echo $TMUX_WEATHER_AU_SRC_DIR
     main "${TMUX_WEATHER_AU_SRC_DIR}"/conf.sh
 else
     for arg in "$@"

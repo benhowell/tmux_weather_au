@@ -22,7 +22,7 @@ declare -A units=(
     ["qnh_pres"]="hPa"
     ["rain_hour"]="mm"
     ["rain_ten"]="mm"
-    ["rel-humidity"]="%"
+    ["rel-humidity"]="% RH"
     ["wind_dir_deg"]="${DEGREES}"
     ["wind_spd_kmh"]="km/h"
     ["wind_spd"]="kn"
@@ -92,17 +92,9 @@ resolve_vars() {
 
 
 # Args: obs fcast
-dispatch() {
-    local -n out_arr="$1"
-
-    load_dict orep <<< "$2"
-    out_arr["obs_label"]=$(resolve_vars OBS_LABEL orep)
-    out_arr["obs_data"]=$(resolve_vars OBS_VARS orep)
-
-    load_dict frep <<< "$3"
-    out_arr["fcast_label"]=$(resolve_vars FCAST_LABEL frep)
-    out_arr["fcast_data"]=$(resolve_vars FCAST_VARS frep)
-}
+#dispatch() {
+    
+#}
 
 
 # Args: path_to_conf_file
@@ -136,7 +128,20 @@ parse_report() {
         local _obs="$(sed -n "${obs_rot}p" "$OUTFILE")"
         local _fcast="$(sed -n "$(expr ${obs_rot} + ${fcast_rot})p" "$OUTFILE")"
         
-        dispatch "$1" "$_obs" "$_fcast"
+        #local -n out_arr="$1"
+
+        load_dict orep <<< "$_obs"
+        o_label=$(resolve_vars OBS_LABEL orep)
+        o_data=$(resolve_vars OBS_VARS orep)
+
+        load_dict frep <<< "$_fcast"
+        f_label=$(resolve_vars FCAST_LABEL frep)
+        f_data=$(resolve_vars FCAST_VARS frep)
+        
+        fcast="$FCAST_LABEL__ $f_label$__FCAST_LABEL $FCAST_DATA__$f_data $__FCAST_DATA"
+        obs="$OBS_LABEL__ $o_label$__OBS_LABEL $OBS_DATA__$o_data $__OBS_DATA"
+        echo "$fcast$obs"
+        #dispatch "$1" "$_obs" "$_fcast"
 
         is_less_than $EPOCHSECONDS $expiry
         if [ $? -eq 0 ]; then

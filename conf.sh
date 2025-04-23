@@ -9,7 +9,7 @@
 #
 #   Format: OBS|FCAST
 declare -a REPORT=(
-    "state=TAS;station=Hobart|state=TAS;forecast_location=Hobart;days=[0 1 2 3 4]"
+    "state=TAS;station=Hobart|state=TAS;forecast_location=Hobart;days=[0 1 2]"
     "state=TAS;station=Hobart|state=TAS;forecast_location=Bellerive;days=[1 2]"
     "state=TAS;station=Hobart Bushland Operations Depot (HCC)|state=TAS;forecast_location=Hobart;days=[1]")
 
