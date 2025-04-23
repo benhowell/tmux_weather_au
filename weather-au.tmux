@@ -1,8 +1,5 @@
 #!/bin/bash
 
-set -o errexit
-set -o pipefail
-
 #TMUX_WEATHER_AU_SRC_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 TMUX_WEATHER_AU_SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export TMUX_WEATHER_AU_SRC_DIR
