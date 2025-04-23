@@ -18,8 +18,6 @@ main() {
     fcast="$FCAST_LABEL__ ${out["fcast_label"]}$__FCAST_LABEL $FCAST_DATA__${out["fcast_data"]} $__FCAST_DATA"
     obs="$OBS_LABEL__ ${out["obs_label"]}$__OBS_LABEL $OBS_DATA__${out["obs_data"]} $__OBS_DATA"
     tmux set-option -g status-format[1] "$fcast$obs"
-   
-    exit 0
 }
 
 #------------------------------------------------------------------------------#
