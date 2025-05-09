@@ -2,9 +2,8 @@
 
 
 #------------------------------------------------------------------------------#
-# If available,returns a pre-rendered tmux status line weather report and      #
-# checks report age to determine if a new report needs to be rendered. If no   #
-# report has been rendered, a new report is rendered.                          #
+# Rendered tmux status bar weather report.                                     #
+# Checks report age to determine if a new data needs to be retrieved.          #
 #------------------------------------------------------------------------------#
 
 DEGREES=$'\xc2\xb0'
@@ -35,15 +34,48 @@ resolve_vars() {
     local -n vars=$1
     local -n data=$2
     declare -a out=()
+    local __orientation=$(echo ${ORIENTATION} | tr '[:lower:]' '[:upper:]')
     local fmt=""
+    local sep=""
+    local seg=0
+    local vars_len=${#vars[@]}
 
     for x in "${!vars[@]}"; do
         readarray -td'|' opts < <(printf '%s' "${vars[$x]}")
-        local fnd=0 #true
-        local _fmt=""
-        declare -a _out=()
+        local seg_style=""
+        
+        if [ $3 -eq 0 ]; then
+            if [ $seg -eq 0 ]; then
+                    __sym=$__orientation"_BOLD"
+                    sep=" $SEG_ARROW_BOLD0${!__sym} " 
+            elif [ $seg -eq $(expr $vars_len - 1) ]; then
+                if [ $4 -eq 1 ]; then
+                    __sym=$__orientation"_BOLD"
+                    sep=" $SEG_ARROW_BOLD1${!__sym} "
+                else
+                    __sym=$__orientation"_BOLD"
+                    sep=" $SEG_ARROW_BOLD2${!__sym}"
+                fi
+            elif [ $seg -eq 1 ]; then
+                __seg="SEG_STYLE$seg"
+                seg_style=${!__seg}
+                __sym=$__orientation"_THIN"
+                sep=" $SEG_ARROW_THIN0${!__sym} "
+            elif [ $seg -eq 2 ]; then
+                __sym=$__orientation"_THIN"
+                sep=" $SEG_ARROW_THIN0${!__sym} "
+            fi
+            ((seg++))
+        else
+            seg_style=" $LABEL_STYLE "
+            __sym=$__orientation"_BOLD"
+            sep=" $LABEL_ARROW_BOLD${!__sym}$SEG_STYLE0 "
+        fi
 
         for y in "${!opts[@]}"; do
+            declare -a _out=()
+            local _fmt=""
+            local fnd=0 #true
             local v0=$(echo "${opts[$y]}" | cut -d ";" -f 1)
             local v1=$(echo "${opts[$y]}" | cut -d ";" -f 2)
             readarray -td% fmts < <(printf '%s' "$v0")
@@ -56,32 +88,58 @@ resolve_vars() {
                 local prm="${params[0]}"
                 _fmt="${_fmt}${fmt1}"
                 case $prm in
-                    "units"_*) _out+=("${units[${prm#units_}]}") ;;
-                    *) if [[ ! -z ${data[$prm]} ]]; then _out+=("${data[$prm]}"); else fnd=1; fi ;; 
+                    "units"_*) 
+                        _out+=("${units[${prm#units_}]}") 
+                        ;;
+                    *) 
+                        if [[ ! -z ${data[$prm]} ]]; then 
+                            _out+=("${data[$prm]}")
+                        else 
+                            fnd=1
+                        fi 
+                        ;; 
                 esac
                 
                 for f in $(seq 2 $(expr $fmt_len - 1)); do
-                    _fmt="${_fmt}%${fmts[$f]}"                    
+                    _fmt="${_fmt}%${fmts[$f]}"             
                     local idx=$(expr $f - 1)
                     local prm=${params[$idx]}
+                    
                     case $prm in
-                        "units"_*) _out+=("${units[${prm#units_}]}") ;;
-                        *) if [[ ! -z ${data[$prm]} ]]; then _out+=("${data[$prm]}"); else fnd=1; fi ;;
+                        "units"_*) 
+                            _out+=("${units[${prm#units_}]}") 
+                            ;;
+                        *) 
+                            if [[ ! -z ${data[$prm]} ]]; then 
+                                _out+=("${data[$prm]}")
+                            else 
+                                fnd=1
+                            fi
+                            ;;
                     esac
+                    
                 done
             else
                 _fmt="${_fmt}$v0"
-                local prm=$v1
+                local prm="$v1"
                 case $prm in
-                    "units"_*) _out+=("${units[${prm#units_}]}") ;;
-                    *) if [[ ! -z ${data[$prm]} ]]; then _out+=("${data[$prm]}"); else fnd=1; fi ;; 
+                    "units"_*) 
+                        _out+=("${units[${prm#units_}]}") 
+                        ;;
+                    *) 
+                        if [[ ! -z ${data[$prm]} ]]; then 
+                            _out+=("${data[$prm]}")
+                        else 
+                            fnd=1
+                        fi 
+                        ;; 
                 esac
             fi
-
+            
             # if we found everything (i.e. not found nothing)...
             if [ $fnd -eq 0 ]; then
                 fmt="${fmt}${_fmt}"
-                out+=( "${_out[@]}" )
+                out+=( "${seg_style}${_out[@]}$sep" )
                 break
             fi
         done
@@ -89,12 +147,6 @@ resolve_vars() {
     done
     printf "${fmt}" "${out[@]}"
 }
-
-
-# Args: obs fcast
-#dispatch() {
-    
-#}
 
 
 # Args: path_to_conf_file
@@ -128,20 +180,41 @@ parse_report() {
         local _obs="$(sed -n "${obs_rot}p" "$OUTFILE")"
         local _fcast="$(sed -n "$(expr ${obs_rot} + ${fcast_rot})p" "$OUTFILE")"
         
-        #local -n out_arr="$1"
+
+
+        
+        if [[ $LEFTMOST = "obs" ]]; then 
+            if [[ $ORIENTATION = "right" ]]; then o_is_last=1 f_is_last=0; fi
+            if [[ $ORIENTATION = "left" ]]; then o_is_last=0 f_is_last=1; fi
+        else
+            if [[ $ORIENTATION = "right" ]]; then o_is_last=0 f_is_last=1; fi
+            if [[ $ORIENTATION = "left" ]]; then o_is_last=1 f_is_last=0; fi
+        fi
+
+        
+
 
         load_dict orep <<< "$_obs"
-        o_label=$(resolve_vars OBS_LABEL orep)
-        o_data=$(resolve_vars OBS_VARS orep)
+        o_label=$(resolve_vars OBS_LABEL orep 1 1)
+        o_data=$(resolve_vars OBS_VARS orep 0 $o_is_last)
 
         load_dict frep <<< "$_fcast"
-        f_label=$(resolve_vars FCAST_LABEL frep)
-        f_data=$(resolve_vars FCAST_VARS frep)
+        f_label=$(resolve_vars FCAST_LABEL frep 1 1)
+        f_data=$(resolve_vars FCAST_VARS frep 0 $f_is_last)
         
-        fcast="$FCAST_LABEL__ $f_label$__FCAST_LABEL $FCAST_DATA__$f_data $__FCAST_DATA"
-        obs="$OBS_LABEL__ $o_label$__OBS_LABEL $OBS_DATA__$o_data $__OBS_DATA"
-        echo "$fcast$obs"
-        #dispatch "$1" "$_obs" "$_fcast"
+        if [[ $ORIENTATION = "right" ]]; then
+            fcast="$f_label$f_data"
+            obs="$o_label$o_data"
+        else
+            fcast="$f_data$f_label"
+            obs="$o_data$o_label"
+        fi
+
+        if [[ $LEFTMOST = "obs" ]]; then
+            echo "#[align=$ALIGN]$obs$fcast"
+        else
+            echo "#[align=$ALIGN]$fcast$obs"
+        fi        
 
         is_less_than $EPOCHSECONDS $expiry
         if [ $? -eq 0 ]; then
