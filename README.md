@@ -173,7 +173,7 @@ reference.
   `printf` formatted label for observations. The label can contain any 
   combination of any observation variable formatted to your choosing. 
 
-  See (Output variables)[https://github.com/benhowell/tmux_weather_au?tab=readme-ov-file#output-variables] for available variables.
+  See (Output variables)[output-variables] for available variables.
 
 ---
 
@@ -192,9 +192,9 @@ reference.
   `tmux_weather_au` status bar widget. Data can contain any 
   combination of any observation variable formatted to your choosing. 
 
-  See (Output variables)[https://github.com/benhowell/tmux_weather_au?tab=readme-ov-file#output-variables] for available variables.
+  See (Output variables)[output-variables] for available variables.
 
-  See (Unit measurement constants)[https://github.com/benhowell/tmux_weather_au?tab=readme-ov-file#unit-measurement-constants] for available measurement units.
+  See (Unit measurement constants)[unit-measurement-constants] for available measurement units.
 
 ---
 
@@ -207,7 +207,7 @@ reference.
   `printf` formatted label for forecasts. The label can contain any 
   combination of any forecast variable formatted to your choosing. 
 
-  See (Output variables)[https://github.com/benhowell/tmux_weather_au?tab=readme-ov-file#output-variables] for available variables.
+  See (Output variables)[output-variables] for available variables.
 
 ---
 
@@ -238,9 +238,9 @@ reference.
   left to right along the line until either an option is able to be fulfilled, 
   or all options are exhausted, in which case, nothing is rendered.
 
-  See (Output variables)[https://github.com/benhowell/tmux_weather_au?tab=readme-ov-file#output-variables] for available variables.
+  See (Output variables)[output-variables] for available variables.
 
-  See (Unit measurement constants)[https://github.com/benhowell/tmux_weather_au?tab=readme-ov-file#unit-measurement-constants] for available measurement units.
+  See (Unit measurement constants)[unit-measurement-constants] for available measurement units.
 
 
 ### Output variables
