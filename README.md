@@ -28,8 +28,8 @@ set -g status-format[1] "$WEATHER_AU"
 
 **or**
 
-2. Downloading the [source](https://github.com/benhowell/tmux_weather_au/archive/refs/heads/main.zip) 
-and extracting it to `<path of your choice>`.
+2. Download the [source](https://github.com/benhowell/tmux_weather_au/archive/refs/heads/main.zip) 
+and extract it to `<path of your choice>`.
 
 Add the following snippet somewhere in your `.tmux.conf`
 
