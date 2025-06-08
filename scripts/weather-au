@@ -51,10 +51,10 @@ resolve_vars() {
             elif [ $seg -eq $(expr $vars_len - 1) ]; then
                 if [ $4 -eq 1 ]; then
                     __sym=$__orientation"_BOLD"
-                    sep=" $SEG_ARROW_BOLD1${!__sym} "
+                    sep=" $SEG_ARROW_BOLD1${!__sym}"
                 else
                     __sym=$__orientation"_BOLD"
-                    sep=" $SEG_ARROW_BOLD2${!__sym}"
+                    sep="$SEG_ARROW_BOLD2${!__sym}"
                 fi
             elif [ $seg -eq 1 ]; then
                 __seg="SEG_STYLE$seg"
