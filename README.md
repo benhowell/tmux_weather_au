@@ -40,9 +40,8 @@ set -g status-format[1] "$WEATHER_AU"
 
 
 ## Configuration
-`conf.sh` is where configuration data lives. The source code for 
-`tmux_weather_au` contains a pre-filled and commented `conf.sh` file for 
-reference.
+`conf.sh` is where configuration data lives. `tmux_weather_au` contains a 
+pre-filled and commented `conf.sh` file for reference.
 
 ### Options
 
