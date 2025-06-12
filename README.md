@@ -307,7 +307,7 @@ All constants are optional.
 | units_air_temperature_maximum | &deg;C           |
 
 
-### Raw data retrieval
+## Raw data retrieval
 
 Raw data can be retrieved by calling [scripts/endpoint.sh](./scripts/endpoint.sh). 
 
@@ -364,7 +364,7 @@ echo "$(endpoint.sh forecasts TAS)" > "forecasts.xml"
 
 ---
 
-### Screenshots
+## Screenshots
 
 ![Screenshot](/doc/example1.png)
 
