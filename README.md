@@ -127,7 +127,7 @@ reference.
   are rendered in rotation from 0 (today) to 4. Once complete, the second line 
   in `REPORT` is executed, etc.
 
-  See [Raw data retrieval](#raw-data-retrieval) for available stations and 
+  See [raw data retrieval](#raw-data-retrieval) for available stations and 
   forecast locations. 
 
   Required parameters
