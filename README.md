@@ -127,6 +127,9 @@ reference.
   are rendered in rotation from 0 (today) to 4. Once complete, the second line 
   in `REPORT` is executed, etc.
 
+  See [Raw data retrieval](#raw-data-retrieval) for available stations and 
+  forecast locations. 
+
   Required parameters
 
   OBS
@@ -304,6 +307,63 @@ All constants are optional.
 | units_air_temperature_minimum | &deg;C           |
 | units_air_temperature_maximum | &deg;C           |
 
+
+### Raw data retrieval
+
+Raw data can be retrieved by calling [scripts/endpoint.sh](./scripts/endpoint.sh). 
+
+**Note:** [scripts/endpoint.sh](./scripts/endpoint.sh) is used internally by 
+tmux_weather_au, so if you decide to hack it up, you do so at your own risk :D
+
+
+**Usage** 
+```
+endpoint.sh operation state
+```
+operation:
+* stations
+* forecast_locations
+* observations
+* forecasts
+
+state:
+* NSW
+* TAS
+* NT
+* QLD
+* SA
+* VIC
+* WA
+
+
+**Examples**
+
+Output all available stations in Tasmania to console (1 station per line)
+```
+endpoint.sh stations TAS
+```
+
+Output all available forecast_locations in Tasmania to console (1 forecast_location per line)
+```
+endpoint.sh forecast_locations TAS
+```
+
+Output all available observations in Tasmania to console in XML format
+```
+endpoint.sh observations TAS
+```
+
+Output all available forecasts in Tasmania to console in XML format
+```
+endpoint.sh forecasts TAS
+```
+
+Output all available forecasts in Tasmania to file
+```
+echo "$(endpoint.sh forecasts TAS)" > "forecasts.xml"
+```
+
+---
 
 ### Screenshots
 

@@ -14,35 +14,6 @@ SRC_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 set +e
 
 
-# end-points
-NSW_OBS=ftp://ftp.bom.gov.au/anon/gen/fwo/IDN60920.xml
-NSW_FCAST=ftp://ftp.bom.gov.au/anon/gen/fwo/IDN11020.xml
-# ftp://ftp.bom.gov.au/anon/gen/fwo/IDN11060.xml
-
-TAS_OBS=ftp://ftp.bom.gov.au/anon/gen/fwo/IDT60920.xml
-TAS_FCAST=ftp://ftp.bom.gov.au/anon/gen/fwo/IDT16710.xml #long form
-
-NT_OBS=ftp://ftp.bom.gov.au/anon/gen/fwo/IDD60920.xml
-NT_FCAST=ftp://ftp.bom.gov.au/anon/gen/fwo/IDD10207.xml
-# ftp://ftp.bom.gov.au/anon/gen/fwo/IDD10207.xml
-
-QLD_OBS=ftp://ftp.bom.gov.au/anon/gen/fwo/IDQ60920.xml
-QLD_FCAST=ftp://ftp.bom.gov.au/anon/gen/fwo/IDQ10606.xml
-# ftp://ftp.bom.gov.au/anon/gen/fwo/IDQ11295.xml
-
-SA_OBS=ftp://ftp.bom.gov.au/anon/gen/fwo/IDS60920.xml
-SA_FCAST=ftp://ftp.bom.gov.au/anon/gen/fwo/IDS11055.xml
-# ftp://ftp.bom.gov.au/anon/gen/fwo/IDS10044.xml
-
-VIC_OBS=ftp://ftp.bom.gov.au/anon/gen/fwo/IDV60920.xml
-VIC_FCAST=ftp://ftp.bom.gov.au/anon/gen/fwo/IDV10750.xml
-# ftp://ftp.bom.gov.au/anon/gen/fwo/IDV10753.xml
-
-WA_OBS=ftp://ftp.bom.gov.au/anon/gen/fwo/IDW60920.xml
-WA_FCAST=ftp://ftp.bom.gov.au/anon/gen/fwo/IDW13010.xml
-# ftp://ftp.bom.gov.au/anon/gen/fwo/IDW14199.xml
-
-
 function extract_var() {
     echo $1 | xpath -q -e '//element[@type='"'$2'"']/text()'
 }
@@ -141,16 +112,6 @@ function obs() {
 }
 
 
-# Args: in-file out-file target_xpath_fragment
-function write_station_location() {
-    > "$2"
-    data="$(echo $(<$1) | xpath -q -e "$3")"
-    #strip leading text and double quotes, convert to lowercase, append to file
-    for i in "$data"; do
-        echo "$i" | sed -e 's/\sdescription=//g' -e 's/\"//g' >> $2; done
-}
-
-
 # Args: report_rotation fcast_rotation path_to_src_dir path_to_conf_file
 function main() {
     TMUX_WEATHER_AU_SRC_DIR=$3
@@ -161,9 +122,7 @@ function main() {
     source ${TMUX_WEATHER_AU_CONF_FILE}
 
     rm -f "${TMUX_WEATHER_AU_DATA_DIR}"/*.obs
-    rm -f "${TMUX_WEATHER_AU_DATA_DIR}"/*.obs_stations
     rm -f "${TMUX_WEATHER_AU_DATA_DIR}"/*.fcast
-    rm -f "${TMUX_WEATHER_AU_DATA_DIR}"/*.fcast_locations
 
     local REPS=""
     local expiry=0
@@ -186,12 +145,10 @@ function main() {
             if [ ! -z ${state+x} ]; then
                 if [ ! -f "${TMUX_WEATHER_AU_DATA_DIR}/${state}.obs" ]; then  
                     # no data for this state, retrieve endpoint data, process, and write files...
-                    obs_endpoint="${state}_OBS"
-                    echo "$(curl -s ${!obs_endpoint})" > "${TMUX_WEATHER_AU_DATA_DIR}/$state.obs"
-                    write_station_location "${TMUX_WEATHER_AU_DATA_DIR}/$state.obs" "${TMUX_WEATHER_AU_DATA_DIR}/$state.obs_stations" '//station/@description'
-                    fcast_endpoint="${state}_FCAST"
-                    echo "$(curl -s ${!fcast_endpoint})" > "${TMUX_WEATHER_AU_DATA_DIR}/$state.fcast"
-                    write_station_location "${TMUX_WEATHER_AU_DATA_DIR}/$state.fcast" "${TMUX_WEATHER_AU_DATA_DIR}/$state.fcast_locations" '//area[@type='"'location'"']/@description'
+                    echo "$(${TMUX_WEATHER_AU_SCRIPTS_DIR}/endpoint.sh stations ${state})" > "${TMUX_WEATHER_AU_DATA_DIR}/$state.obs_stations"
+                    echo "$(${TMUX_WEATHER_AU_SCRIPTS_DIR}/endpoint.sh observations ${state})" > "${TMUX_WEATHER_AU_DATA_DIR}/$state.obs"
+                    echo "$(${TMUX_WEATHER_AU_SCRIPTS_DIR}/endpoint.sh forecast_locations ${state})" > "${TMUX_WEATHER_AU_DATA_DIR}/$state.fcast_locations"
+                    echo "$(${TMUX_WEATHER_AU_SCRIPTS_DIR}/endpoint.sh forecasts ${state})" > "${TMUX_WEATHER_AU_DATA_DIR}/$state.fcast"
                 fi
 
                 if [ ! -z ${station+x} ]; then

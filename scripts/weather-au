@@ -179,10 +179,8 @@ parse_report() {
 
         local _obs="$(sed -n "${obs_rot}p" "$OUTFILE")"
         local _fcast="$(sed -n "$(expr ${obs_rot} + ${fcast_rot})p" "$OUTFILE")"
-        
 
 
-        
         if [[ $LEFTMOST = "obs" ]]; then 
             if [[ $ORIENTATION = "right" ]]; then o_is_last=1 f_is_last=0; fi
             if [[ $ORIENTATION = "left" ]]; then o_is_last=0 f_is_last=1; fi
@@ -190,8 +188,6 @@ parse_report() {
             if [[ $ORIENTATION = "right" ]]; then o_is_last=0 f_is_last=1; fi
             if [[ $ORIENTATION = "left" ]]; then o_is_last=1 f_is_last=0; fi
         fi
-
-        
 
 
         load_dict orep <<< "$_obs"
